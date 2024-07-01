@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Andre Camillo's Games</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: #333;
+            margin: 0;
+        }
+        .logo {
+            width: 100px;
+            height: auto;
+        }
+        main {
+            flex-grow: 1;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        th:nth-child(2), th:nth-child(3),
+        td:nth-child(2), td:nth-child(3) {
+            text-align: center;
+        }
+        .icon {
+            font-size: 1.2em;
+        }
+        .checkmark {
+            color: green;
+        }
+        .cross {
+            color: red;
+        }
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .logo {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Andre Camillo's Games</h1>
+        <img src="ACG.png" alt="Logo" class="logo">
+    </header>
+    <main>
+        <p>Choose a game to play:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Game</th>
+                    <th>📱</th>
+                    <th>⌨️</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><a href="Snake-claude.html">HTML Snake</a></td>
+                    <td class="icon checkmark">❌</td>
+                    <td class="icon checkmark">✅</td>
+                </tr>
+                <!-- Add more game rows as needed -->
+            </tbody>
+        </table>
+    </main>
+    <footer>
+        <p>Created with AI by Andre Camillo, 2024.</p>
+        <p><a href="https://linktr.ee/acamillo" target="_blank">Contact Andre Camillo</a></p>
+        <p>&copy; 2024 Andre Camillo's Games. All rights reserved.</p>
+    </footer>
+</body>
+</html>
