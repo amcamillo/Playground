@@ -1,0 +1,111 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    margin: 0;
+    padding: 0;
+}
+
+#game-container {
+    width: 90%;
+    margin: auto;
+    padding: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+#main-game-screen, #shop-screen, #round-results-screen {
+    background: #ffffff;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+}
+
+#player-panel, #adversary-panel {
+    display: inline-block;
+    vertical-align: top;
+    width: 48%;
+}
+
+.player-info, .adversary-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.card-section {
+    margin: 10px 0;
+}
+
+.card-hand {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1px dashed #ccc;
+    min-height: 60px;
+    padding: 5px;
+}
+
+.card {
+    background: #eee;
+    padding: 5px;
+    margin: 5px;
+    width: 100px;
+    text-align: center;
+    border: 1px solid #999;
+    cursor: move;
+}
+
+.card:hover {
+    background: #ddd;
+}
+
+.tactic-icon {
+    display: inline-block;
+    background: #ffc;
+    padding: 10px;
+    margin: 5px;
+    border: 1px solid #aaa;
+    width: 120px;
+    text-align: center;
+}
+
+#tactics-area {
+    margin-top: 10px;
+}
+
+#card-play-area {
+    margin-top: 20px;
+    clear: both;
+}
+
+#active-process-area {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1px dashed #999;
+    min-height: 60px;
+    padding: 5px;
+}
+
+#buttons-panel {
+    margin-top: 20px;
+}
+
+#shop-offerings {
+    display: flex;
+    justify-content: space-between;
+}
+
+.shop-category {
+    width: 30%;
+}
+
+.shop-cards {
+    border: 1px dashed #ccc;
+    min-height: 100px;
+    padding: 5px;
+}
+
+.round-results-details p {
+    margin: 5px 0;
+}
