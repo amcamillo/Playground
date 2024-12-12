@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rogue-like Cybersecurity Card Game</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<div id="game-container">
+    <!-- Main Game Screen -->
+    <div id="main-game-screen">
+        <div id="player-panel">
+            <h2>Player</h2>
+            <div class="player-info">
+                <div class="player-data">
+                    <span id="data-cards-count">Data: 5</span>
+                    <span id="money-count">$0</span>
+                </div>
+                <div id="process-cards-active">
+                    <h3>Active Process Cards</h3>
+                    <div id="active-process-area"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="adversary-panel">
+            <h2>Adversary</h2>
+            <div class="adversary-info">
+                <span id="adversary-name">Adversary: APT Alpha</span>
+                <span id="current-match">Match: 1/5</span>
+                <span id="current-round">Round: 1</span>
+            </div>
+            <div id="tactics-area">
+                <h3>Tactics This Round</h3>
+                <div id="adversary-tactics-list"></div>
+            </div>
+        </div>
+
+        <div id="card-play-area">
+            <div class="card-section">
+                <h3>Data Cards</h3>
+                <div id="data-cards-hand" class="card-hand"></div>
+            </div>
+            <div class="card-section">
+                <h3>Control Cards (drag to tactics)</h3>
+                <div id="control-cards-hand" class="card-hand"></div>
+            </div>
+            <div class="card-section">
+                <h3>Process Cards (drag to Process area)</h3>
+                <div id="process-cards-hand" class="card-hand"></div>
+            </div>
+        </div>
+
+        <div id="buttons-panel">
+            <button id="end-round-btn">End Round</button>
+        </div>
+    </div>
+
+    <!-- Shop Screen -->
+    <div id="shop-screen" class="hidden">
+        <h2>Shop</h2>
+        <p>Buy up to 2 cards. Costs: Control=$150, Data=$100, Process=$100</p>
+        <div id="shop-offerings">
+            <div class="shop-category">
+                <h3>Control</h3>
+                <div id="shop-control-cards" class="shop-cards"></div>
+            </div>
+            <div class="shop-category">
+                <h3>Data</h3>
+                <div id="shop-data-cards" class="shop-cards"></div>
+            </div>
+            <div class="shop-category">
+                <h3>Process</h3>
+                <div id="shop-process-cards" class="shop-cards"></div>
+            </div>
+        </div>
+        <div id="shop-info">
+            <span id="shop-money-available">Money: $0</span>
+            <span id="shop-purchases-made">Purchased: 0/2</span>
+        </div>
+        <button id="leave-shop-btn">Leave Shop</button>
+    </div>
+
+    <!-- Round Results Screen -->
+    <div id="round-results-screen" class="hidden">
+        <h2>Round Results</h2>
+        <div id="round-results-details">
+            <p>Mitigated Tactics: <span id="mitigated-count">0</span></p>
+            <p>Money Earned: <span id="money-earned">0</span></p>
+            <p>Data Lost: <span id="data-lost">0</span></p>
+            <p>Controls Destroyed: <span id="controls-destroyed">0</span></p>
+            <p>Boosted Tactics Next Round: <span id="boosted-tactics">None</span></p>
+        </div>
+        <button id="continue-next-match-btn">Continue</button>
+    </div>
+</div>
+
+<script>
+// =============================================================
+// GAME DATA & CONSTANTS
+// =============================================================
+
+const MATCHES = [
+    { name: "APT Alpha", rounds: 3, baseTactics: 3 },
+    { name: "APT Beta", rounds: 4, baseTactics: 3 },
+    { name: "APT Gamma", rounds: 6, baseTactics: 4 },
+    { name: "APT Delta", rounds: 8, baseTactics: 5 },
+    { name: "APT Omega", rounds: 10, baseTactics: 6 },
+];
+
+const CONTROL_CARD_COST = 150;
+const DATA_CARD_COST = 100;
+const PROCESS_CARD_COST = 100;
+
+const INITIAL_CONTROL_CARDS = [
+    {id:"C1", name:"NGAV", tacticCategory:"Execution", effectiveness:1.0},
+    {id:"C2", name:"Firewall", tacticCategory:"Initial Access", effectiveness:1.0},
+    {id:"C3", name:"EDR", tacticCategory:"Defense Evasion", effectiveness:1.0},
+    {id:"C4", name:"NIDS", tacticCategory:"Discovery", effectiveness:1.0},
+    {id:"C5", name:"Sandbox", tacticCategory:"Execution", effectiveness:1.0},
+    {id:"C6", name:"Honeypot", tacticCategory:"Lateral Movement", effectiveness:1.0},
+    {id:"C7", name:"SIEM", tacticCategory:"Command and Control", effectiveness:1.0},
+    {id:"C8", name:"Cloud Access Security Broker", tacticCategory:"Credential Access", effectiveness:1.0},
+    {id:"C9", name:"IPS", tacticCategory:"Privilege Escalation", effectiveness:1.0},
+    {id:"C10", name:"WAF", tacticCategory:"Initial Access", effectiveness:1.0},
+    {id:"C11", name:"Endpoint Firewall", tacticCategory:"Defense Evasion", effectiveness:1.0},
+    {id:"C12", name:"URL Filtering", tacticCategory:"Initial Access", effectiveness:1.0},
+    {id:"C13", name:"Secure Boot", tacticCategory:"Execution", effectiveness:1.0},
+    {id:"C14", name:"Threat Intel Feed", tacticCategory:"Command and Control", effectiveness:1.0},
+    {id:"C15", name:"Anti-Phishing", tacticCategory:"Credential Access", effectiveness:1.0},
+    {id:"C16", name:"Behavioral Detection", tacticCategory:"Defense Evasion", effectiveness:1.0},
+    {id:"C17", name:"Code Signing Validation", tacticCategory:"Execution", effectiveness:1.0},
+    {id:"C18", name:"Micro-Segmentation", tacticCategory:"Lateral Movement", effectiveness:1.0},
+    {id:"C19", name:"System Hardening", tacticCategory:"Privilege Escalation", effectiveness:1.0},
+    {id:"C20", name:"Patch Management", tacticCategory:"Initial Access", effectiveness:1.0},
+];
+
+const INITIAL_DATA_CARDS = [
+    {id:"D1", name:"Customer Records"},
+    {id:"D2", name:"Intellectual Property"},
+    {id:"D3", name:"Financial Data"},
+    {id:"D4", name:"R&D Blueprints"},
+    {id:"D5", name:"Employee Credentials"}
+];
+
+const INITIAL_PROCESS_CARDS = [
+    {id:"P1", name:"User Awareness Training", category:"Credential Access", boost:0.5},
+    {id:"P2", name:"MFA Implementation", category:"Initial Access", synergy: ["IAM"]},
+    {id:"P3", name:"ISO 27001 Accreditation", category:"Persistence", boost:0.2},
+    {id:"P4", name:"Incident Response Plan", category:"Defense Evasion", boost:0.3},
+    {id:"P5", name:"IAM Policies", category:"Initial Access", synergy: ["MFA"]}
+];
+
+const TACTICS_POOL = [
+    {id:"T1", category:"Initial Access", baseEffectiveness:1.0},
+    {id:"T2", category:"Execution", baseEffectiveness:1.0},
+    {id:"T3", category:"Defense Evasion", baseEffectiveness:1.0},
+    {id:"T4", category:"Credential Access", baseEffectiveness:1.0},
+    {id:"T5", category:"Privilege Escalation", baseEffectiveness:1.0},
+    {id:"T6", category:"Lateral Movement", baseEffectiveness:1.0},
+    {id:"T7", category:"Persistence", baseEffectiveness:1.0},
+    {id:"T8", category:"Discovery", baseEffectiveness:1.0},
+    {id:"T9", category:"Command and Control", baseEffectiveness:1.0}
+];
+
+// Shuffle utility
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i+1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// =============================================================
+// GAME STATE
+// =============================================================
+const gameState = {
+    currentMatchIndex: 0,
+    currentRound: 1,
+    playerMoney: 0,
+    playerData: INITIAL_DATA_CARDS.slice(),
+    playerControls: INITIAL_CONTROL_CARDS.slice(),
+    playerProcesses: INITIAL_PROCESS_CARDS.slice(),
+    usedCardIds: {
+        control: new Set(INITIAL_CONTROL_CARDS.map(c=>c.id)),
+        data: new Set(INITIAL_DATA_CARDS.map(d=>d.id)),
+        process: new Set(INITIAL_PROCESS_CARDS.map(p=>p.id))
+    },
+    currentRoundTactics: [],
+    mitigatedTacticsCount: 0,
+    destroyedControlsCount: 0,
+    purchasedCount: 0
+};
+
+let draggedCard = null;
+
+// =============================================================
+// UI UPDATES
+// =============================================================
+function updatePlayerPanel() {
+    document.getElementById('data-cards-count').textContent = `Data: ${gameState.playerData.length}`;
+    document.getElementById('money-count').textContent = `$${gameState.playerMoney}`;
+}
+
+function updateAdversaryPanel() {
+    const matchInfo = MATCHES[gameState.currentMatchIndex];
+    document.getElementById('adversary-name').textContent = `Adversary: ${matchInfo.name}`;
+    document.getElementById('current-match').textContent = `Match: ${gameState.currentMatchIndex+1}/5`;
+    document.getElementById('current-round').textContent = `Round: ${gameState.currentRound}`;
+}
+
+function renderHands() {
+    // Clear old
+    const controlHand = document.getElementById('control-cards-hand');
+    controlHand.innerHTML = '';
+    gameState.playerControls.forEach(card => {
+        const cardEl = createCardElement(card, 'control');
+        controlHand.appendChild(cardEl);
+    });
+
+    const dataHand = document.getElementById('data-cards-hand');
+    dataHand.innerHTML = '';
+    gameState.playerData.forEach(card => {
+        const cardEl = createCardElement(card, 'data');
+        dataHand.appendChild(cardEl);
+    });
+
+    const processHand = document.getElementById('process-cards-hand');
+    processHand.innerHTML = '';
+    gameState.playerProcesses.forEach(card => {
+        const cardEl = createCardElement(card, 'process');
+        processHand.appendChild(cardEl);
+    });
+}
+
+function createCardElement(card, type) {
+    const cardEl = document.createElement('div');
+    cardEl.classList.add('card', type+'-card');
+    cardEl.setAttribute('draggable','true');
+    cardEl.dataset.cardId = card.id;
+    cardEl.innerHTML = `<strong>${card.name}</strong><br/>${type === 'control'?card.tacticCategory:''}`;
+    cardEl.addEventListener('dragstart', onDragStart);
+    return cardEl;
+}
+
+function renderTactics() {
+    const tacticsList = document.getElementById('adversary-tactics-list');
+    tacticsList.innerHTML = '';
+    gameState.currentRoundTactics.forEach(t => {
+        const tacticEl = document.createElement('div');
+        tacticEl.classList.add('tactic-icon');
+        tacticEl.dataset.tacticId = t.id;
+        tacticEl.textContent = t.category;
+        tacticEl.addEventListener('dragover', onDragOver);
+        tacticEl.addEventListener('drop', onDropOnTactic);
+        tacticsList.appendChild(tacticEl);
+    });
+}
+
+function renderProcessArea() {
+    const processArea = document.getElementById('active-process-area');
+    processArea.innerHTML = '';
+    processArea.addEventListener('dragover', onDragOver);
+    processArea.addEventListener('drop', onDropOnProcessArea);
+}
+
+// =============================================================
+// DRAG & DROP HANDLERS
+// =============================================================
+function onDragStart(e) {
+    draggedCard = e.target;
+}
+
+function onDragOver(e) {
+    e.preventDefault();
+}
+
+function onDropOnTactic(e) {
+    e.preventDefault();
+    if(!draggedCard) return;
+    const tacticId = e.currentTarget.dataset.tacticId;
+    const tactic = gameState.currentRoundTactics.find(t=>t.id===tacticId);
+    const cardId = draggedCard.dataset.cardId;
+    const card = findCardById(cardId);
+    if(card && draggedCard.classList.contains('control-card')) {
+        // Assign control card to tactic
+        tactic.assignedControl = card;
+        e.currentTarget.appendChild(draggedCard);
+    }
+    draggedCard = null;
+}
+
+function onDropOnProcessArea(e) {
+    e.preventDefault();
+    if(!draggedCard) return;
+    const cardId = draggedCard.dataset.cardId;
+    const card = findCardById(cardId);
+    if(card && draggedCard.classList.contains('process-card')) {
+        // Move process to active area
+        // Remove from hand and place in active area
+        const idx = gameState.playerProcesses.findIndex(p=>p.id===cardId);
+        if(idx !== -1) {
+            const processArea = document.getElementById('active-process-area');
+            processArea.appendChild(draggedCard);
+        }
+    }
+    draggedCard = null;
+}
+
+// =============================================================
+// GAME LOGIC
+// =============================================================
+function startGame() {
+    updatePlayerPanel();
+    updateAdversaryPanel();
+    renderHands();
+    renderProcessArea();
+    startRound();
+}
+
+function startRound() {
+    // Generate tactics for this round
+    const matchInfo = MATCHES[gameState.currentMatchIndex];
+    // Round difficulty scaling: +1 tactic in addition to their base number for advanced rounds
+    const extraTactics = Math.floor((gameState.currentRound-1)/2); 
+    const tacticCount = matchInfo.baseTactics + extraTactics;
+    const shuffled = shuffle(TACTICS_POOL.slice());
+    gameState.currentRoundTactics = shuffled.slice(0, tacticCount).map(t=>({...t}));
+    renderTactics();
+}
+
+function findCardById(cardId) {
+    let card = gameState.playerControls.find(c=>c.id===cardId);
+    if(!card) card = gameState.playerData.find(d=>d.id===cardId);
+    if(!card) card = gameState.playerProcesses.find(p=>p.id===cardId);
+    return card;
+}
+
+function endRound() {
+    // Evaluate tactics
+    let mitigated = 0;
+    let dataLost = 0;
+    let controlsDestroyed = 0;
+
+    // Determine active Process coverage
+    const activeProcess = getActiveProcessCards();
+    const processCoverage = {};
+    activeProcess.forEach(p => {
+        processCoverage[p.category] = p;
+    });
+
+    gameState.currentRoundTactics.forEach(tactic => {
+        // Check if tactic is mitigated
+        const controlCard = tactic.assignedControl;
+        let effectivenessBoost = 1.0;
+
+        // Missing process card for tactic category => +50% effectiveness
+        if(!processCoverage[tactic.category]) {
+            effectivenessBoost += 0.5;
+        }
+
+        // If control card matches category, mitigate, else fail
+        if(controlCard && controlCard.tacticCategory === tactic.category) {
+            // Check for process synergy that further reduces effectiveness
+            const synergyBoost = calculateSynergyBoost(controlCard, processCoverage);
+            const finalEffectiveness = tactic.baseEffectiveness * effectivenessBoost * (1 - synergyBoost);
+            if(finalEffectiveness <= 1.0) {
+                // Mitigated
+                mitigated++;
+            } else {
+                // Partially mitigated but still some effect
+                dataLost++;
+            }
+        } else {
+            // Not mitigated at all
+            dataLost++;
+            // Destroy a control card if present on field (if there's any top control card)
+            // For simplicity, if tactic fails, it destroys one random control from player's hand if any
+            if(gameState.playerControls.length > 0) {
+                gameState.playerControls.pop();
+                controlsDestroyed++;
+            }
+        }
+    });
+
+    // Calculate money earned
+    const moneyEarned = mitigated * 10; 
+    gameState.playerMoney += moneyEarned;
+
+    // Remove lost data cards
+    for(let i=0; i<dataLost && gameState.playerData.length > 0; i++) {
+        gameState.playerData.pop();
+    }
+
+    // Store destroyed count (for next round's draw penalty)
+    gameState.destroyedControlsCount = controlsDestroyed;
+
+    showRoundResults(mitigated, moneyEarned, dataLost, controlsDestroyed);
+
+    // Check if player lost
+    if(gameState.playerData.length === 0) {
+        alert("You lost all Data! Game Over.");
+        // For a real game: Restart or show Game Over screen
+    } else {
+        // Move to next round or next match
+    }
+}
+
+function calculateSynergyBoost(controlCard, processCoverage) {
+    // Example synergy: MFA + IAM fully neutralizes Initial Access
+    let synergy = 0.0;
+    if(controlCard.tacticCategory === "Initial Access") {
+        const mfa = Object.values(processCoverage).find(p=>p.name==="MFA Implementation");
+        const iam = Object.values(processCoverage).find(p=>p.name==="IAM Policies");
+        if(mfa && iam) {
+            synergy = 1.0; // fully neutralize
+        }
+    }
+    return synergy;
+}
+
+function getActiveProcessCards() {
+    const activeProcessArea = document.getElementById('active-process-area');
+    const activeCardEls = activeProcessArea.querySelectorAll('.process-card');
+    const active = [];
+    activeCardEls.forEach(el=>{
+        const cardId = el.dataset.cardId;
+        const card = gameState.playerProcesses.find(p=>p.id===cardId);
+        if(card) active.push(card);
+    });
+    return active;
+}
+
+function showRoundResults(mitigated, earned, dataLost, controlsDestroyed) {
+    document.getElementById('mitigated-count').textContent = mitigated;
+    document.getElementById('money-earned').textContent = earned;
+    document.getElementById('data-lost').textContent = dataLost;
+    document.getElementById('controls-destroyed').textContent = controlsDestroyed;
+    document.getElementById('boosted-tactics').textContent = (dataLost > mitigated) ? "Yes (+10% next round)" : "None";
+    document.getElementById('round-results-screen').classList.remove('hidden');
+    document.getElementById('main-game-screen').classList.add('hidden');
+}
+
+function continueToNextMatchOrRound() {
+    document.getElementById('round-results-screen').classList.add('hidden');
+    document.getElementById('main-game-screen').classList.remove('hidden');
+
+    const matchInfo = MATCHES[gameState.currentMatchIndex];
+    if(gameState.currentRound < matchInfo.rounds) {
+        // Next round in the same match
+        gameState.currentRound++;
+        startRound();
+    } else {
+        // Match ended, go to shop if not last match
+        if(gameState.currentMatchIndex < MATCHES.length-1) {
+            showShop();
+        } else {
+            alert("All matches completed! You won!");
+        }
+    }
+    updatePlayerPanel();
+    updateAdversaryPanel();
+    renderHands();
+    renderProcessArea();
+}
+
+function showShop() {
+    document.getElementById('shop-screen').classList.remove('hidden');
+    document.getElementById('main-game-screen').classList.add('hidden');
+
+    // Generate shop items
+    generateShopOfferings();
+}
+
+function generateShopOfferings() {
+    document.getElementById('shop-control-cards').innerHTML = '';
+    document.getElementById('shop-data-cards').innerHTML = '';
+    document.getElementById('shop-process-cards').innerHTML = '';
+    gameState.purchasedCount = 0;
+    document.getElementById('shop-money-available').textContent = `Money: $${gameState.playerMoney}`;
+    document.getElementById('shop-purchases-made').textContent = `Purchased: 0/2`;
+
+    // For simplicity, random picks:
+    const controlOffers = pickRandomUniqueControls(2);
+    const dataOffers = pickRandomUniqueData(2);
+    const processOffers = pickRandomUniqueProcess(2);
+
+    controlOffers.forEach(c=> {
+        const el = document.createElement('div');
+        el.classList.add('card', 'control-card');
+        el.textContent = `${c.name} [${c.tacticCategory}] - $${CONTROL_CARD_COST}`;
+        el.dataset.cardId = c.id;
+        el.addEventListener('click', () => buyCard(c,'control'));
+        document.getElementById('shop-control-cards').appendChild(el);
+    });
+
+    dataOffers.forEach(c=> {
+        const el = document.createElement('div');
+        el.classList.add('card', 'data-card');
+        el.textContent = `${c.name} - $${DATA_CARD_COST}`;
+        el.dataset.cardId = c.id;
+        el.addEventListener('click', () => buyCard(c,'data'));
+        document.getElementById('shop-data-cards').appendChild(el);
+    });
+
+    processOffers.forEach(c=> {
+        const el = document.createElement('div');
+        el.classList.add('card', 'process-card');
+        el.textContent = `${c.name} - $${PROCESS_CARD_COST}`;
+        el.dataset.cardId = c.id;
+        el.addEventListener('click', () => buyCard(c,'process'));
+        document.getElementById('shop-process-cards').appendChild(el);
+    });
+}
+
+function pickRandomUniqueControls(count) {
+    // For simplicity, pick from a pool of control cards not in player hand
+    const allControlIDs = new Set(INITIAL_CONTROL_CARDS.map(c=>c.id));
+    const ownedIDs = new Set(gameState.playerControls.map(c=>c.id));
+    const available = INITIAL_CONTROL_CARDS.filter(c=>!ownedIDs.has(c.id));
+    shuffle(available);
+    return available.slice(0,count);
+}
+
+function pickRandomUniqueData(count) {
+    const allDataIDs = new Set(INITIAL_DATA_CARDS.map(c=>c.id));
+    const ownedIDs = new Set(gameState.playerData.map(c=>c.id));
+    const available = INITIAL_DATA_CARDS.filter(c=>!ownedIDs.has(c.id));
+    shuffle(available);
+    return available.slice(0,count);
+}
+
+function pickRandomUniqueProcess(count) {
+    const allProcessIDs = new Set(INITIAL_PROCESS_CARDS.map(c=>c.id));
+    const ownedIDs = new Set(gameState.playerProcesses.map(c=>c.id));
+    const available = INITIAL_PROCESS_CARDS.filter(c=>!ownedIDs.has(c.id));
+    shuffle(available);
+    return available.slice(0,count);
+}
+
+function buyCard(card, type) {
+    if(gameState.purchasedCount >= 2) return;
+    let cost = 0;
+    if(type==='control') cost = CONTROL_CARD_COST;
+    if(type==='data') cost = DATA_CARD_COST;
+    if(type==='process') cost = PROCESS_CARD_COST;
+
+    if(gameState.playerMoney >= cost) {
+        gameState.playerMoney -= cost;
+        if(type==='control') gameState.playerControls.push(card);
+        if(type==='data') gameState.playerData.push(card);
+        if(type==='process') gameState.playerProcesses.push(card);
+        gameState.purchasedCount++;
+        document.getElementById('shop-money-available').textContent = `Money: $${gameState.playerMoney}`;
+        document.getElementById('shop-purchases-made').textContent = `Purchased: ${gameState.purchasedCount}/2`;
+    }
+}
+
+function leaveShop() {
+    // Move to next match
+    gameState.currentMatchIndex++;
+    gameState.currentRound = 1;
+    if(gameState.currentMatchIndex < MATCHES.length) {
+        document.getElementById('shop-screen').classList.add('hidden');
+        document.getElementById('main-game-screen').classList.remove('hidden');
+        updatePlayerPanel();
+        updateAdversaryPanel();
+        renderHands();
+        renderProcessArea();
+        startRound();
+    } else {
+        alert("All matches completed! You won!");
+    }
+}
+
+// =============================================================
+// EVENT LISTENERS
+// =============================================================
+document.getElementById('end-round-btn').addEventListener('click', endRound);
+document.getElementById('continue-next-match-btn').addEventListener('click', continueToNextMatchOrRound);
+document.getElementById('leave-shop-btn').addEventListener('click', leaveShop);
+
+// =============================================================
+// START
+// =============================================================
+startGame();
+</script>
+</body>
+</html>
